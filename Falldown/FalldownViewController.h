@@ -1,5 +1,5 @@
 //
-//  ViewController.h
+//  FalldownViewController.h
 //  Falldown
 //
 //  Created by Neal Wu on 3/26/15.
@@ -8,8 +8,6 @@
 
 #import <UIKit/UIKit.h>
 
-@interface ViewController : UIViewController
-
+@interface FalldownViewController : UIViewController
 
 @end
-
