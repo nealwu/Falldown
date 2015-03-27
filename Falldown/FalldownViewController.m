@@ -9,13 +9,19 @@
 #import "FalldownViewController.h"
 
 const int BRICK_SLOTS = 12;
+const int MIN_BRICKS = 4;
+const int MAX_BRICKS = 11;
 const int BRICK_VELOCITY = 100;
+const int CHANGE_PERCENTAGE = 20;
 
 @interface FalldownViewController () <UICollisionBehaviorDelegate>
 
-@property (assign, nonatomic) NSInteger BRICK_WIDTH;
-@property (assign, nonatomic) NSInteger BRICK_HEIGHT;
-@property (assign, nonatomic) NSInteger PLAYER_WIDTH;
+@property (assign, nonatomic) CGFloat SCREEN_WIDTH;
+@property (assign, nonatomic) CGFloat SCREEN_HEIGHT;
+
+@property (assign, nonatomic) CGFloat BRICK_WIDTH;
+@property (assign, nonatomic) CGFloat BRICK_HEIGHT;
+@property (assign, nonatomic) CGFloat PLAYER_WIDTH;
 
 @property (strong, nonatomic) UIImage *playerImage;
 @property (strong, nonatomic) UIImage *brickImage;
@@ -42,12 +48,14 @@ const int BRICK_VELOCITY = 100;
     self.playerImage = [UIImage imageNamed:@"player"];
     self.brickImage = [UIImage imageNamed:@"brick"];
 
-    self.BRICK_WIDTH = self.view.frame.size.width / BRICK_SLOTS;
+    self.SCREEN_WIDTH = self.view.frame.size.width;
+    self.SCREEN_HEIGHT = self.view.frame.size.height;
+    self.BRICK_WIDTH = self.SCREEN_WIDTH / BRICK_SLOTS;
     self.BRICK_HEIGHT = self.BRICK_WIDTH * self.brickImage.size.height / self.brickImage.size.width;
     self.PLAYER_WIDTH = self.BRICK_WIDTH * self.playerImage.size.width / self.brickImage.size.width;
 
     self.player = [[UIImageView alloc] initWithImage:self.playerImage];
-    self.player.frame = CGRectMake(0, 0, self.PLAYER_WIDTH, self.PLAYER_WIDTH);
+    self.player.frame = CGRectMake(0, 1, self.PLAYER_WIDTH, self.PLAYER_WIDTH);
     [self.view addSubview:self.player];
 
     self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
@@ -56,7 +64,10 @@ const int BRICK_VELOCITY = 100;
     [self.gravity addItem:self.player];
 
     self.collision = [[UICollisionBehavior alloc] init];
-    self.collision.translatesReferenceBoundsIntoBoundary = YES;
+    [self.collision addBoundaryWithIdentifier:@"top" fromPoint:CGPointMake(0, 0) toPoint:CGPointMake(self.SCREEN_WIDTH, 0)];
+    [self.collision addBoundaryWithIdentifier:@"bottom" fromPoint:CGPointMake(0, self.SCREEN_HEIGHT) toPoint:CGPointMake(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)];
+    [self.collision addBoundaryWithIdentifier:@"left" fromPoint:CGPointMake(0, 0) toPoint:CGPointMake(0, self.SCREEN_HEIGHT)];
+    [self.collision addBoundaryWithIdentifier:@"right" fromPoint:CGPointMake(self.SCREEN_WIDTH, 0) toPoint:CGPointMake(self.SCREEN_WIDTH, self.SCREEN_HEIGHT)];
     self.collision.collisionDelegate = self;
     [self.collision addItem:self.player];
 
@@ -68,45 +79,82 @@ const int BRICK_VELOCITY = 100;
     [self.animator addBehavior:self.collision];
     [self.animator addBehavior:self.brickItemBehavior];
 
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:2 target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
     [timer fire];
 }
 
 #pragma mark - UICollisionBehaviorDelegate methods
 
-- (void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id<UIDynamicItem>)item withBoundaryIdentifier:(id<NSCopying>)identifier {
+- (void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id<UIDynamicItem>)item withBoundaryIdentifier:(id<NSCopying>)identifier atPoint:(CGPoint)p {
     UIView *view = (UIView *) item;
     NSString *boundary = (NSString *) identifier;
 
     if (view == self.player) {
-        NSLog(@"YOU LOSE");
-    } else {
-        NSLog(@"Brick collided with top");
-    }
+        NSLog(@"You collided with %@", boundary);
 
-    NSLog(@"Item %@ collided with boundary %@", view, boundary);
+        if ([boundary isEqualToString:@"top"]) {
+            [self.gravity removeItem:view];
+            [self.collision removeItem:view];
+            [view removeFromSuperview];
+        }
+    } else {
+        if ([boundary isEqualToString:@"top"]) {
+            [self.brickItemBehavior removeItem:view];
+            [self.collision removeItem:view];
+            [view removeFromSuperview];
+        }
+    }
 }
 
 - (void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 {
     UIView *view1 = (UIView *) item1;
     UIView *view2 = (UIView *) item2;
-    NSLog(@"Item %@ collided with item %@", view1, view2);
-    NSLog(@"Items collided together");
 }
 
 #pragma mark - Private methods
 
+- (NSArray *)randomBooleans:(int)length {
+    NSMutableArray *booleans = [NSMutableArray array];
+
+    for (int i = 0; i < length; i++) {
+        [booleans addObject:@(arc4random_uniform(2) == 0)];
+    }
+
+    return booleans;
+}
+
+- (NSArray *)randomBricks:(int)length {
+    NSArray *bricks;
+    int numBricks;
+
+    do {
+        bricks = [self randomBooleans:length];
+        numBricks = 0;
+
+        for (NSNumber *brick in bricks) {
+            if ([brick boolValue]) {
+                numBricks++;
+            }
+        }
+    } while (numBricks < MIN_BRICKS || numBricks > MAX_BRICKS);
+
+    return bricks;
+}
+
 - (void)generateBricks {
-    NSInteger y = self.view.frame.size.height - self.BRICK_HEIGHT;
+    CGFloat y = self.SCREEN_HEIGHT - self.BRICK_HEIGHT;
+    NSArray *bricks = [self randomBricks:BRICK_SLOTS];
 
     for (int i = 0; i < BRICK_SLOTS; i++) {
-        UIImageView *brick = [[UIImageView alloc] init];
-        brick.frame = CGRectMake(self.view.frame.size.width * i / BRICK_SLOTS, y, self.BRICK_WIDTH, self.BRICK_HEIGHT);
-        brick.image = self.brickImage;
-        [self.view addSubview:brick];
-        [self.collision addItem:brick];
-        [self.brickItemBehavior addItem:brick];
-        [self.brickItemBehavior addLinearVelocity:CGPointMake(0, -BRICK_VELOCITY) forItem:brick];
+        if ([bricks[i] boolValue]) {
+            UIImageView *brick = [[UIImageView alloc] init];
+            brick.frame = CGRectMake(self.SCREEN_WIDTH * i / BRICK_SLOTS, y, self.BRICK_WIDTH, self.BRICK_HEIGHT);
+            brick.image = self.brickImage;
+            [self.view addSubview:brick];
+            [self.collision addItem:brick];
+            [self.brickItemBehavior addItem:brick];
+            [self.brickItemBehavior addLinearVelocity:CGPointMake(0, -BRICK_VELOCITY) forItem:brick];
+        }
     }
 }
 
