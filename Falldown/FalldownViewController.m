@@ -77,6 +77,8 @@ const int BRICK_PROBABILITY = 75;
 
     self.playerItemBehavior = [[UIDynamicItemBehavior alloc] init];
     self.playerItemBehavior.resistance = 0;
+    self.playerItemBehavior.friction = 0;
+    self.playerItemBehavior.allowsRotation = NO;
     [self.playerItemBehavior addItem:self.player];
 
     self.brickItemBehavior = [[UIDynamicItemBehavior alloc] init];
