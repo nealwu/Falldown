@@ -15,7 +15,7 @@ const int BRICK_VELOCITY = 200;
 const int DOWN_VELOCITY = 400;
 const int PLAYER_VELOCITY = 200;
 const int BRICK_PROBABILITY = 75;
-const double BRICK_GENERATION_PERIOD = 0.75;
+const double BRICK_GENERATION_PERIOD = 0.5;
 
 @interface FalldownViewController () <UICollisionBehaviorDelegate>
 
@@ -38,6 +38,12 @@ const double BRICK_GENERATION_PERIOD = 0.75;
 
 @property (strong, nonatomic) UIDynamicItemBehavior *playerItemBehavior;
 @property (strong, nonatomic) UIDynamicItemBehavior *brickItemBehavior;
+
+@property (strong, nonatomic) NSTimer *timer;
+
+@property (assign, nonatomic) NSInteger score;
+
+@property (weak, nonatomic) IBOutlet UILabel *scoreLabel;
 
 @end
 
@@ -93,8 +99,10 @@ const double BRICK_GENERATION_PERIOD = 0.75;
     [self.animator addBehavior:self.playerItemBehavior];
     [self.animator addBehavior:self.brickItemBehavior];
 
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:BRICK_GENERATION_PERIOD target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
-    [timer fire];
+    self.score = 0;
+
+    self.timer = [NSTimer scheduledTimerWithTimeInterval:BRICK_GENERATION_PERIOD target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
+    [self.timer fire];
 }
 
 #pragma mark - UICollisionBehaviorDelegate methods
@@ -110,6 +118,7 @@ const double BRICK_GENERATION_PERIOD = 0.75;
             [self.gravity removeItem:view];
             [self.collision removeItem:view];
             [view removeFromSuperview];
+            [self onLost];
         }
     } else {
         if ([boundary isEqualToString:@"top"]) {
@@ -120,6 +129,15 @@ const double BRICK_GENERATION_PERIOD = 0.75;
     }
 }
 /*
+- (void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 atPoint:(CGPoint)p {
+    UIView *view1 = (UIView *) item1;
+    UIView *view2 = (UIView *) item2;
+
+    if (view1.alpha == 0 || view2.alpha == 0) {
+        NSLog(@"Passed through!");
+    }
+}
+
 - (void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 atPoint:(CGPoint)p {
     NSLog(@"Began collision");
     CGPoint velocity = [self.playerItemBehavior linearVelocityForItem:self.player];
@@ -201,6 +219,21 @@ const double BRICK_GENERATION_PERIOD = 0.75;
             [self.brickItemBehavior addLinearVelocity:CGPointMake(0, -BRICK_VELOCITY) forItem:brick];
         }
     }
+
+    self.score++;
+    self.scoreLabel.text = [NSString stringWithFormat:@"%ld", self.score];
+}
+
+- (void)onLost {
+    [self.timer invalidate];
+//    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"You lost!" message:[NSString stringWithFormat:@"You scored %ld points", self.score] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+//    [alertView show];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"You lost!" message:[NSString stringWithFormat:@"You scored %ld points", self.score] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Play again" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    }];
+
+    [alert addAction:defaultAction];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 @end
