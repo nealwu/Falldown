@@ -226,9 +226,17 @@ const double BRICK_GENERATION_PERIOD = 0.5;
 
 - (void)onLost {
     [self.timer invalidate];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSNumber *highScore = [defaults objectForKey:@"highScore"];
+
+    if (highScore == nil || self.score > [highScore integerValue]) {
+        highScore = @(self.score);
+        [defaults setObject:highScore forKey:@"highScore"];
+    }
+
 //    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"You lost!" message:[NSString stringWithFormat:@"You scored %ld points", self.score] delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
 //    [alertView show];
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"You lost!" message:[NSString stringWithFormat:@"You scored %ld points", self.score] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"You lost!" message:[NSString stringWithFormat:@"Your score: %ld\nHigh score: %@", self.score, highScore] preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Play again" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"restartGame" object:nil];
     }];
