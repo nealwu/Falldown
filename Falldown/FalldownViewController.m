@@ -230,6 +230,7 @@ const double BRICK_GENERATION_PERIOD = 0.5;
 //    [alertView show];
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"You lost!" message:[NSString stringWithFormat:@"You scored %ld points", self.score] preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *defaultAction = [UIAlertAction actionWithTitle:@"Play again" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"restartGame" object:nil];
     }];
 
     [alert addAction:defaultAction];

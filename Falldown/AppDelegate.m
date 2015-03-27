@@ -18,10 +18,15 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartGame) name:@"restartGame" object:nil];
+    [self restartGame];
+    return YES;
+}
+
+- (void)restartGame {
     self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
     self.window.rootViewController = [[FalldownViewController alloc] init];
     [self.window makeKeyAndVisible];
-    return YES;
 }
 
 @end
