@@ -11,9 +11,9 @@
 const int BRICK_SLOTS = 12;
 const int MIN_BRICKS = 4;
 const int MAX_BRICKS = 11;
-const int BRICK_VELOCITY = 100;
-const int PLAYER_VELOCITY = 50;
-const int CHANGE_PERCENTAGE = 20;
+const int BRICK_VELOCITY = 200;
+const int PLAYER_VELOCITY = 200;
+const int BRICK_PROBABILITY = 75;
 
 @interface FalldownViewController () <UICollisionBehaviorDelegate>
 
@@ -23,6 +23,7 @@ const int CHANGE_PERCENTAGE = 20;
 @property (assign, nonatomic) CGFloat BRICK_WIDTH;
 @property (assign, nonatomic) CGFloat BRICK_HEIGHT;
 @property (assign, nonatomic) CGFloat PLAYER_WIDTH;
+@property (assign, nonatomic) CGFloat PLAYER_HEIGHT;
 
 @property (strong, nonatomic) UIImage *playerImage;
 @property (strong, nonatomic) UIImage *brickImage;
@@ -55,9 +56,10 @@ const int CHANGE_PERCENTAGE = 20;
     self.BRICK_WIDTH = self.SCREEN_WIDTH / BRICK_SLOTS;
     self.BRICK_HEIGHT = self.BRICK_WIDTH * self.brickImage.size.height / self.brickImage.size.width;
     self.PLAYER_WIDTH = self.BRICK_WIDTH * self.playerImage.size.width / self.brickImage.size.width;
+    self.PLAYER_HEIGHT = self.PLAYER_WIDTH * self.playerImage.size.height / self.playerImage.size.width;
 
     self.player = [[UIImageView alloc] initWithImage:self.playerImage];
-    self.player.frame = CGRectMake(0, 1, self.PLAYER_WIDTH, self.PLAYER_WIDTH);
+    self.player.frame = CGRectMake(0, 1, self.PLAYER_WIDTH, self.PLAYER_HEIGHT);
     [self.view addSubview:self.player];
 
     self.animator = [[UIDynamicAnimator alloc] initWithReferenceView:self.view];
@@ -83,9 +85,10 @@ const int CHANGE_PERCENTAGE = 20;
 
     [self.animator addBehavior:self.gravity];
     [self.animator addBehavior:self.collision];
+    [self.animator addBehavior:self.playerItemBehavior];
     [self.animator addBehavior:self.brickItemBehavior];
 
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:2 target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
     [timer fire];
 }
 
@@ -112,17 +115,26 @@ const int CHANGE_PERCENTAGE = 20;
     }
 }
 
-- (void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 {
-    UIView *view1 = (UIView *) item1;
-    UIView *view2 = (UIView *) item2;
-}
-
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     // Stop velocity and add velocity in the appropriate direction
+    CGPoint velocity = [self.playerItemBehavior linearVelocityForItem:self.player];
+    velocity = CGPointMake(-velocity.x, 0);
+    UITouch *touch = [touches anyObject];
+
+    if ([touch locationInView:self.view].x < self.SCREEN_WIDTH / 2) {
+        velocity.x -= PLAYER_VELOCITY;
+    } else {
+        velocity.x += PLAYER_VELOCITY;
+    }
+
+    [self.playerItemBehavior addLinearVelocity:velocity forItem:self.player];
 }
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     // Stop velocity
+    CGPoint velocity = [self.playerItemBehavior linearVelocityForItem:self.player];
+    velocity = CGPointMake(-velocity.x, 0);
+    [self.playerItemBehavior addLinearVelocity:velocity forItem:self.player];
 }
 
 #pragma mark - Private methods
@@ -131,7 +143,7 @@ const int CHANGE_PERCENTAGE = 20;
     NSMutableArray *booleans = [NSMutableArray array];
 
     for (int i = 0; i < length; i++) {
-        [booleans addObject:@(arc4random_uniform(2) == 0)];
+        [booleans addObject:@(arc4random_uniform(100) < BRICK_PROBABILITY)];
     }
 
     return booleans;
