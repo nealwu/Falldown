@@ -14,6 +14,7 @@
             <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
             <color key="backgroundColor" red="0.63529411764705879" green="0.65490196078431373" blue="0.55294117647058827" alpha="1" colorSpace="calibratedRGB"/>
+            <gestureRecognizers/>
             <point key="canvasLocation" x="340" y="425"/>
         </view>
     </objects>

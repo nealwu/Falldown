@@ -12,6 +12,7 @@ const int BRICK_SLOTS = 12;
 const int MIN_BRICKS = 4;
 const int MAX_BRICKS = 11;
 const int BRICK_VELOCITY = 100;
+const int PLAYER_VELOCITY = 50;
 const int CHANGE_PERCENTAGE = 20;
 
 @interface FalldownViewController () <UICollisionBehaviorDelegate>
@@ -32,6 +33,7 @@ const int CHANGE_PERCENTAGE = 20;
 @property (strong, nonatomic) UIGravityBehavior *gravity;
 @property (strong, nonatomic) UICollisionBehavior *collision;
 
+@property (strong, nonatomic) UIDynamicItemBehavior *playerItemBehavior;
 @property (strong, nonatomic) UIDynamicItemBehavior *brickItemBehavior;
 
 @end
@@ -71,6 +73,10 @@ const int CHANGE_PERCENTAGE = 20;
     self.collision.collisionDelegate = self;
     [self.collision addItem:self.player];
 
+    self.playerItemBehavior = [[UIDynamicItemBehavior alloc] init];
+    self.playerItemBehavior.resistance = 0;
+    [self.playerItemBehavior addItem:self.player];
+
     self.brickItemBehavior = [[UIDynamicItemBehavior alloc] init];
     self.brickItemBehavior.resistance = 0;
     self.brickItemBehavior.density = 1e9;
@@ -109,6 +115,14 @@ const int CHANGE_PERCENTAGE = 20;
 - (void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 {
     UIView *view1 = (UIView *) item1;
     UIView *view2 = (UIView *) item2;
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+    // Stop velocity and add velocity in the appropriate direction
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+    // Stop velocity
 }
 
 #pragma mark - Private methods
