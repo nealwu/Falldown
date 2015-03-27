@@ -12,8 +12,10 @@ const int BRICK_SLOTS = 12;
 const int MIN_BRICKS = 4;
 const int MAX_BRICKS = 11;
 const int BRICK_VELOCITY = 200;
+const int DOWN_VELOCITY = 400;
 const int PLAYER_VELOCITY = 200;
 const int BRICK_PROBABILITY = 75;
+const double BRICK_GENERATION_PERIOD = 0.75;
 
 @interface FalldownViewController () <UICollisionBehaviorDelegate>
 
@@ -80,6 +82,7 @@ const int BRICK_PROBABILITY = 75;
     self.playerItemBehavior.friction = 0;
     self.playerItemBehavior.allowsRotation = NO;
     [self.playerItemBehavior addItem:self.player];
+//    [self.playerItemBehavior addLinearVelocity:CGPointMake(0, DOWN_VELOCITY) forItem:self.player];
 
     self.brickItemBehavior = [[UIDynamicItemBehavior alloc] init];
     self.brickItemBehavior.resistance = 0;
@@ -90,7 +93,7 @@ const int BRICK_PROBABILITY = 75;
     [self.animator addBehavior:self.playerItemBehavior];
     [self.animator addBehavior:self.brickItemBehavior];
 
-    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:1 target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
+    NSTimer *timer = [NSTimer scheduledTimerWithTimeInterval:BRICK_GENERATION_PERIOD target:self selector:@selector(generateBricks) userInfo:nil repeats:YES];
     [timer fire];
 }
 
@@ -116,6 +119,20 @@ const int BRICK_PROBABILITY = 75;
         }
     }
 }
+/*
+- (void)collisionBehavior:(UICollisionBehavior *)behavior beganContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 atPoint:(CGPoint)p {
+    NSLog(@"Began collision");
+    CGPoint velocity = [self.playerItemBehavior linearVelocityForItem:self.player];
+    [self.playerItemBehavior addLinearVelocity:CGPointMake(0, -velocity.y) forItem:self.player];
+}
+
+- (void)collisionBehavior:(UICollisionBehavior *)behavior endedContactForItem:(id<UIDynamicItem>)item1 withItem:(id<UIDynamicItem>)item2 {
+    NSLog(@"Ended collision");
+    CGPoint velocity = [self.playerItemBehavior linearVelocityForItem:self.player];
+    [self.playerItemBehavior addLinearVelocity:CGPointMake(0, -velocity.y + DOWN_VELOCITY) forItem:self.player];
+}
+*/
+#pragma mark - Touch methods
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     // Stop velocity and add velocity in the appropriate direction
@@ -176,7 +193,7 @@ const int BRICK_PROBABILITY = 75;
     for (int i = 0; i < BRICK_SLOTS; i++) {
         if ([bricks[i] boolValue]) {
             UIImageView *brick = [[UIImageView alloc] init];
-            brick.frame = CGRectMake(self.SCREEN_WIDTH * i / BRICK_SLOTS, y, self.BRICK_WIDTH, self.BRICK_HEIGHT);
+            brick.frame = CGRectMake(i * self.SCREEN_WIDTH / BRICK_SLOTS, y, (i + 1) * self.SCREEN_WIDTH / BRICK_SLOTS - i * self.SCREEN_WIDTH / BRICK_SLOTS, self.BRICK_HEIGHT);
             brick.image = self.brickImage;
             [self.view addSubview:brick];
             [self.collision addItem:brick];
